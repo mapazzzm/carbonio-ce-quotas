@@ -22,6 +22,10 @@ A patch for Carbonio CE fixing mailbox quota usage display in the admin panel.
 
 - Carbonio CE 26.x (проверено на **26.3.2**, Ubuntu 24.04 Noble)
 
+### Требования
+
+Для применения патча нужен один из интерпретаторов: **python3** или **node**. Скрипт проверяет их наличие автоматически и использует первый доступный. На стандартной установке Carbonio CE оба присутствуют.
+
 ### Применение
 
 Выполните на сервере Carbonio CE от root:
@@ -64,6 +68,10 @@ Sorting still works because it is performed server-side before data reaches the 
 ### Affected versions
 
 - Carbonio CE 26.x (confirmed on **26.3.2**, Ubuntu 24.04 Noble)
+
+### Requirements
+
+The script requires either **python3** or **node** to apply the patch. It detects which one is available and uses it automatically. Both are present in a standard Carbonio CE installation.
 
 ### Usage
 
