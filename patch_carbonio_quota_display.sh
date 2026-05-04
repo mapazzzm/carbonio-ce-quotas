@@ -64,7 +64,9 @@ apply_patch() {
     cp "$SHELL_MJS" "${SHELL_MJS}${BACKUP_SUFFIX}"
 
     echo "Применяю патч..."
-    python3 - "$SHELL_MJS" "$OLD_STR" "$NEW_STR" <<'PYEOF'
+    if command -v python3 &>/dev/null; then
+        echo "Использую python3"
+        python3 - "$SHELL_MJS" "$OLD_STR" "$NEW_STR" <<'PYEOF'
 import sys
 path, old, new = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(path, 'r', encoding='utf-8', errors='replace') as f:
@@ -81,6 +83,23 @@ with open(path, 'w', encoding='utf-8') as f:
     f.write(content)
 print("OK")
 PYEOF
+    elif command -v node &>/dev/null; then
+        echo "python3 не найден, использую node"
+        node -e "
+const fs = require('fs');
+const [path, old, newStr] = process.argv.slice(1);
+let content = fs.readFileSync(path, 'utf8');
+if (!content.includes(old)) { console.error('ERROR: строка не найдена в файле'); process.exit(1); }
+const count = content.split(old).length - 1;
+if (count > 1) { console.error('ERROR: найдено ' + count + ' вхождений (ожидалось 1)'); process.exit(1); }
+fs.writeFileSync(path, content.replace(old, newStr));
+console.log('OK');
+" "$SHELL_MJS" "$OLD_STR" "$NEW_STR"
+    else
+        echo "ERROR: не найден ни python3, ни node — невозможно применить патч"
+        cp "${SHELL_MJS}${BACKUP_SUFFIX}" "$SHELL_MJS"
+        exit 1
+    fi
 
     if [ $? -eq 0 ]; then
         echo "Патч успешно применён."
