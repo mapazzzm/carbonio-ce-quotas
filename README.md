@@ -20,7 +20,12 @@ A patch for Carbonio CE fixing mailbox quota usage display in the admin panel.
 
 ### Затронутые версии
 
-- Carbonio CE 26.x (проверено на **26.3.2**, Ubuntu 24.04 Noble)
+- Carbonio CE 26.x — обе сборки admin-console-ui:
+  - **v1** — 0.12.x (CE 26.3, функции Mfe/Efe/X2)
+  - **v2** — 0.13.x (CE 26.6, Vite-переписана, t8/e8/n6)
+  
+  Скрипт сам определяет версию сборки по содержимому `shell.mjs`.
+  Проверено на 26.3.2 и 26.6.0; Ubuntu 22.04 и 24.04.
 
 ### Требования
 
