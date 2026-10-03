@@ -14,7 +14,8 @@
 # ДВЕ ВЕРСИИ СБОРКИ (детект по содержимому shell.mjs):
 #   v1 — admin-console-ui 0.12.x (CE 26.3): функции Mfe/Efe/X2, объект `u`.
 #   v2 — admin-console-ui 0.13.x (CE 26.6, Vite-переписана): t8/e8/n6, объект `e`.
-#   Если ни один набор не найден — сборка снова изменилась, добавьте v3.
+#   v3 — admin-console-ui 0.15.x: k6/V3 (трансформер A6).
+#   Если ни один набор не найден — сборка снова изменилась, добавьте v4.
 #
 # СОВМЕСТИМОСТЬ: Carbonio CE 26.x, Ubuntu 22.04 и 24.04 (нужен python3 либо node).
 #
@@ -50,6 +51,12 @@ VARIANTS = {
     'e8(e?.mailsQuotaUsed??e?.used??0,e.mailsQuotaLimit??e?.limit??0,t)'),
    ('mailsQuotaUsed:n6(e?.mailsQuotaUsed||0).toFixed(2)',
     'mailsQuotaUsed:n6(e?.mailsQuotaUsed??e?.used??0).toFixed(2)'),
+ ],
+ "v3": [
+   ('k6(e?.mailsQuotaUsed??0,e.mailsQuotaLimit??0,t)',
+    'k6(e?.mailsQuotaUsed??e?.used??0,e.mailsQuotaLimit??e?.limit??0,t)'),
+   ('mailsQuotaUsed:V3(e?.mailsQuotaUsed||0).toFixed(2)',
+    'mailsQuotaUsed:V3(e?.mailsQuotaUsed??e?.used??0).toFixed(2)'),
  ],
 }
 try:
@@ -93,6 +100,9 @@ const VARIANTS = {
  v2: [
    ['e8(e?.mailsQuotaUsed??0,e.mailsQuotaLimit??0,t)','e8(e?.mailsQuotaUsed??e?.used??0,e.mailsQuotaLimit??e?.limit??0,t)'],
    ['mailsQuotaUsed:n6(e?.mailsQuotaUsed||0).toFixed(2)','mailsQuotaUsed:n6(e?.mailsQuotaUsed??e?.used??0).toFixed(2)']],
+ v3: [
+   ['k6(e?.mailsQuotaUsed??0,e.mailsQuotaLimit??0,t)','k6(e?.mailsQuotaUsed??e?.used??0,e.mailsQuotaLimit??e?.limit??0,t)'],
+   ['mailsQuotaUsed:V3(e?.mailsQuotaUsed||0).toFixed(2)','mailsQuotaUsed:V3(e?.mailsQuotaUsed??e?.used??0).toFixed(2)']],
 };
 let c;
 try { c = fs.readFileSync(path, 'utf8'); } catch (e) { console.log('STATUS:ERROR file'); process.exit(2); }
