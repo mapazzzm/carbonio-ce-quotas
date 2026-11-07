@@ -25,6 +25,17 @@ sudo bash enforce/install.sh                  # сборка + установк�
 sudo bash patch_carbonio_quota_display.sh
 ```
 
+### Где в админке / Where in the admin console (admin-console-ui 0.20.x, с `rest-shim/`)
+
+| Что / What | Где / Where |
+|---|---|
+| Квота домена, «Использование квот» (сводка + таблица ящиков), «Предупреждения о заполнении ящика» (порог, интервал), «Скачать отчёт по квотам» / domain quota, "Quota usage", "Mailbox full warnings", quota report | **Домены → домен → Общие настройки**, раздел квот учётных записей / **Domains → domain → General Settings**, account quota section |
+| Квота ящика и её источник (учётка / COS / домен), занято из лимита / mailbox quota, its source, used of limit | **Учетные записи → ящик**: блок «Использование хранилища» и поле «Общая квота (ГБ)» в общих сведениях / **Accounts → mailbox**: "Storage usage" block and the "Total quota(GB)" field |
+| Квота класса обслуживания / COS quota | **КО (класс обслуживания) → COS → Дополнительно → Лимиты** / **COS → class of service → Advanced → Quotas** |
+
+После установки или обновления — **Ctrl+F5** в админке (файлы админки кэшируются браузером).
+After installing or updating, press **Ctrl+F5** in the admin console (its files are cached by the browser).
+
 ---
 
 ## RU Описание
@@ -74,7 +85,7 @@ sudo bash patch_carbonio_quota_display.sh
 показ/загрузка/сохранение квоты учётки, раздел «Настройки квот учётных записей» домена, раздел квоты COS);
 остальные функции advanced (бэкап, HSM, OTP, Legal Hold…) остаются скрыты.
 
-В разделе квот домена добавлен блок **«Использование квот»**: сводка (занято в домене, число ящиков, ≥ порога предупреждения — из формы «Предупреждения о заполнении ящика», по умолчанию 90 %,
+В разделе квот домена (**Домены → домен → Общие настройки**) добавлен блок **«Использование квот»**: сводка (занято в домене, число ящиков, ≥ порога предупреждения — из формы «Предупреждения о заполнении ящика», по умолчанию 90 %,
 заполненные, самый большой) и таблица ящиков (занято / % с полосой, сортировка, поиск, постранично; столбец «Лимит»
 появляется, только если лимиты ящиков различаются, иначе общий лимит — одним полем в сводке) —
 замена списка «Лимит почтового ящика», убранного в 0.20. Лимит ящика — меньшее ненулевое из его квоты и квоты домена.
@@ -100,8 +111,8 @@ python3 rest-shim/install.py uninstall
 (`QuotaCheckSingleton.DefaultQuotaCheck`), письма «ящик заполнен на N%» (`QuotaWarning`) удалены — ящики
 растут сверх лимита, предупреждений нет. `enforce/` — расширение appserver, возвращающее логику 4.27:
 превышение → `552 5.2.2 Over quota`, предупреждение по шаблону COS `zimbraQuotaWarnMessage` при
-`zimbraQuotaWarnPercent` (90%), не чаще `zimbraQuotaWarnInterval`. Порог и интервал можно менять в разделе
-квот домена (блок «Предупреждения о заполнении ящика», ставит `rest-shim/`).
+`zimbraQuotaWarnPercent` (90%), не чаще `zimbraQuotaWarnInterval`. Порог и интервал можно менять в **Домены → домен → Общие настройки**
+(блок «Предупреждения о заполнении ящика», ставит `rest-shim/`).
 
 ```bash
 sudo bash enforce/install.sh             # сборка + установка + перезапуск appserver
@@ -171,7 +182,7 @@ the browser and serves them from the admin SOAP API in the JSON shapes the scree
 (account: `zimbraMailQuota` of the account/COS and the domain's `zimbraMailDomainQuota`, the lower
 non-zero one applies, usage via `GetMailbox`; COS: `zimbraMailQuota`; domain:
 `zimbraMailDomainQuota`; report: CSV from `GetQuotaUsage`). Files/chat quotas are not stored in CE
-and show as 0. The domain quota section also gets a **"Quota usage"** block (domain summary incl. mailboxes at or above the warning threshold from the "Mailbox full warnings" form + sortable,
+and show as 0. The domain quota section (**Domains → domain → General Settings**) also gets a **"Quota usage"** block (domain summary incl. mailboxes at or above the warning threshold from the "Mailbox full warnings" form + sortable,
 searchable mailbox table with used / %; a Limit column appears only when mailbox limits differ, otherwise the common limit is shown once in the summary), replacing the per-mailbox list removed in 0.20. In 0.20.x the quota screens are also hidden unless `carbonio-advanced` is installed; the
 installer lifts that condition for the quota screens only (`unlock_0.20.json`, 9 sites), other advanced features
 stay hidden. Independent of minified identifiers (except the report-button regex); re-running
@@ -189,7 +200,7 @@ empty (`QuotaCheckSingleton.DefaultQuotaCheck`) and the "mailbox is N% full" mes
 gone — mailboxes grow past the limit with no warnings. `enforce/` is an appserver extension restoring the
 4.27 logic: over quota → `552 5.2.2 Over quota`, a warning from the COS `zimbraQuotaWarnMessage` template at
 `zimbraQuotaWarnPercent` (90%), at most once per `zimbraQuotaWarnInterval`. The threshold and interval can
-be edited in the domain quota section (the "Mailbox full warnings" block added by `rest-shim/`).
+be edited in **Domains → domain → General Settings** (the "Mailbox full warnings" block added by `rest-shim/`).
 
 ```bash
 sudo bash enforce/install.sh             # build + install + appserver restart

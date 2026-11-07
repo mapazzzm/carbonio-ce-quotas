@@ -61,8 +61,7 @@ grep -a "cu-quota-enforce: quota check installed" /opt/zextras/log/mailbox.log |
 ```
 
 Порог и интервал предупреждений — атрибуты COS `zimbraQuotaWarnPercent` / `zimbraQuotaWarnInterval`
-(`zmprov mc default zimbraQuotaWarnPercent 90`). В админке 0.20.x их можно править в разделе квот
-домена, если установлен [`rest-shim/`](../rest-shim) этого же репозитория.
+(`zmprov mc default zimbraQuotaWarnPercent 90`). В админке 0.20.x их можно править в **Домены → домен → Общие настройки** (блок «Предупреждения о заполнении ящика»), если установлен [`rest-shim/`](../rest-shim) этого же репозитория.
 
 ### Проверено (Carbonio CE 26.9.0, appserver 4.36.6)
 
@@ -133,7 +132,7 @@ grep -a "cu-quota-enforce: quota check installed" /opt/zextras/log/mailbox.log |
 
 The warning threshold and interval are the COS attributes `zimbraQuotaWarnPercent` /
 `zimbraQuotaWarnInterval` (`zmprov mc default zimbraQuotaWarnPercent 90`). In admin-console-ui 0.20.x
-they can be edited in the domain quota section when
+they can be edited in **Domains → domain → General Settings** (the "Mailbox full warnings" block) when
 [`rest-shim/`](../rest-shim) from this repository is installed.
 
 ### Tested (Carbonio CE 26.9.0, appserver 4.36.6)
