@@ -75,7 +75,8 @@ sudo bash patch_carbonio_quota_display.sh
 остальные функции advanced (бэкап, HSM, OTP, Legal Hold…) остаются скрыты.
 
 В разделе квот домена добавлен блок **«Использование квот»**: сводка (занято в домене, число ящиков, ≥ 80 %,
-заполненные, самый большой) и таблица ящиков (занято / лимит / % с полосой, сортировка, поиск, постранично) —
+заполненные, самый большой) и таблица ящиков (занято / % с полосой, сортировка, поиск, постранично; столбец «Лимит»
+появляется, только если лимиты ящиков различаются, иначе общий лимит — одним полем в сводке) —
 замена списка «Лимит почтового ящика», убранного в 0.20. Лимит ящика — меньшее ненулевое из его квоты и квоты домена.
 
 Квоты Files и чатов в CE не хранятся — их использование показывается как 0.
@@ -169,7 +170,7 @@ the browser and serves them from the admin SOAP API in the JSON shapes the scree
 non-zero one applies, usage via `GetMailbox`; COS: `zimbraMailQuota`; domain:
 `zimbraMailDomainQuota`; report: CSV from `GetQuotaUsage`). Files/chat quotas are not stored in CE
 and show as 0. The domain quota section also gets a **"Quota usage"** block (domain summary + sortable,
-searchable mailbox table with used / limit / %), replacing the per-mailbox list removed in 0.20. In 0.20.x the quota screens are also hidden unless `carbonio-advanced` is installed; the
+searchable mailbox table with used / %; a Limit column appears only when mailbox limits differ, otherwise the common limit is shown once in the summary), replacing the per-mailbox list removed in 0.20. In 0.20.x the quota screens are also hidden unless `carbonio-advanced` is installed; the
 installer lifts that condition for the quota screens only (`unlock_0.20.json`, 9 sites), other advanced features
 stay hidden. Independent of minified identifiers (except the report-button regex); re-running
 updates an existing install, `uninstall` restores the original `shell.mjs`.

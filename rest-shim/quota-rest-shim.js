@@ -100,10 +100,10 @@ window.fetch=function(input,init){
  * zimbraMailQuota (GetQuotaUsage.limit) и zimbraMailDomainQuota домена — как считает сервер. */
 const RU=(document.documentElement.lang||navigator.language||"").toLowerCase().startsWith("ru");
 const L=RU?{title:"Использование квот",total:"Занято в домене",boxes:"Ящиков",warn:"≥ 80%",full:"Заполнены (100%)",max:"Самый большой",
-  search:"Поиск по адресу…",mbox:"Ящик",used:"Занято",limit:"Лимит",pct:"%",unl:"без лимита",load:"Загрузка…",err:"Не удалось получить данные: ",
+  search:"Поиск по адресу…",mbox:"Ящик",used:"Занято",limit:"Лимит",limAll:"Лимит ящика",pct:"%",unl:"без лимита",load:"Загрузка…",err:"Не удалось получить данные: ",
   none:"Нет ящиков",prev:"‹ Назад",next:"Вперёд ›",of:"из",refresh:"Обновить"}
  :{title:"Quota usage",total:"Used in domain",boxes:"Mailboxes",warn:"≥ 80%",full:"Full (100%)",max:"Largest",
-  search:"Search by address…",mbox:"Mailbox",used:"Used",limit:"Limit",pct:"%",unl:"unlimited",load:"Loading…",err:"Failed to load: ",
+  search:"Search by address…",mbox:"Mailbox",used:"Used",limit:"Limit",limAll:"Mailbox limit",pct:"%",unl:"unlimited",load:"Loading…",err:"Failed to load: ",
   none:"No mailboxes",prev:"‹ Prev",next:"Next ›",of:"of",refresh:"Refresh"};
 const fmt=b=>{b=num(b);if(!b)return"0";const u=RU?["Б","КБ","МБ","ГБ","ТБ"]:["B","KB","MB","GB","TB"];let i=Math.min(Math.floor(Math.log(b)/Math.log(1024)),u.length-1);return(b/1024**i).toFixed(i>=3?2:i?1:0).replace(".",RU?",":".")+" "+u[i]};
 const loadDomain=async dn=>{
@@ -180,20 +180,22 @@ window.__cuDomQuotaFactory=(R,J,UI)=>function CuDomQuota(props){
       children:T(warn?LW.note(warn.cosName,warn.shared):(wst||L.load),{color:"secondary",overflow:"break-word"})})]});
   if(err||!rows)return hs(Q,{mainAlignment:"flex-start",crossAlignment:"flex-start",width:"100%",children:[warnSection,header,
     h(Row,{mainAlignment:"flex-start",width:"100%",padding:{all:"large"},children:T(err?L.err+err:L.load,{color:err?"error":"secondary"})})]});
-  const fld=(lab,val,w)=>h(Q,{width:w||"19%",mainAlignment:"flex-start",children:h(Field,{label:lab,value:val,backgroundColor:"gray6"})});
+  // лимит у всех одинаковый (обычно — квота домена) → столбец не нужен, показываем одно поле в сводке
+  const same=rows.length>0&&rows.every(r=>r.limit===rows[0].limit);
+  const fld=(lab,val,w)=>h(Q,{width:w||(same?"15.5%":"19%"),mainAlignment:"flex-start",children:h(Field,{label:lab,value:val,backgroundColor:"gray6"})});
   const summary=hs(Row,{width:"100%",mainAlignment:"space-between",padding:{top:"large",left:"small",right:"small"},children:[
-    fld(L.total,fmt(tot)),fld(L.boxes,String(rows.length)),fld(L.warn,String(w80)),fld(L.full,String(full)),fld(L.max,big?`${big.name} — ${fmt(big.used)}`:"—")]});
+    fld(L.total,fmt(tot)),fld(L.boxes,String(rows.length)),...(same?[fld(L.limAll,rows[0].limit?fmt(rows[0].limit):L.unl)]:[]),fld(L.warn,String(w80)),fld(L.full,String(full)),fld(L.max,big?`${big.name} — ${fmt(big.used)}`:"—")]});
   const onSort=(id,ord)=>{setSort({k:id,d:ord==="asc"?1:-1});setOff(0)};
   const headers=[
-    {id:"name",label:L.mbox,width:"40%",bold:!0,sortable:!0,onSortChange:onSort},
-    {id:"used",label:L.used,width:"16%",bold:!0,sortable:!0,onSortChange:onSort},
-    {id:"limit",label:L.limit,width:"16%",bold:!0,sortable:!0,onSortChange:onSort},
+    {id:"name",label:L.mbox,width:same?"50%":"40%",bold:!0,sortable:!0,onSortChange:onSort},
+    {id:"used",label:L.used,width:same?"22%":"16%",bold:!0,sortable:!0,onSortChange:onSort},
+    ...(same?[]:[{id:"limit",label:L.limit,width:"16%",bold:!0,sortable:!0,onSortChange:onSort}]),
     {id:"pct",label:L.pct,width:"10%",bold:!0,sortable:!0,onSortChange:onSort},
     {id:"bar",label:"",width:"18%",bold:!0}];
   const bar=p=>p==null?T("\xA0"):h(Q,{orientation:"horizontal",mainAlignment:"flex-start",width:"7rem",height:"0.5rem",background:"gray3",
     style:{borderRadius:"0.25rem",overflow:"hidden"},children:h(Q,{width:Math.max(Math.min(p,100),1)+"%",height:"100%",background:p>=100?"error":p>=80?"warning":"success"})});
   const trows=slice.map(r=>({id:r.id,clickable:!1,columns:[
-    T(r.name,{weight:"regular"}),T(fmt(r.used)),T(r.limit?fmt(r.limit):L.unl,{color:r.limit?"gray0":"secondary"}),
+    T(r.name,{weight:"regular"}),T(fmt(r.used)),...(same?[]:[T(r.limit?fmt(r.limit):L.unl,{color:r.limit?"gray0":"secondary"})]),
     T(r.pct==null?"—":Math.floor(r.pct)+"%",{color:tone(r.pct),weight:r.pct!=null&&r.pct>=80?"bold":"light"}),bar(r.pct)]}));
   const search=hs(Row,{width:"100%",mainAlignment:"space-between",crossAlignment:"center",padding:{top:"large",left:"small",right:"small"},children:[
     h(Q,{width:"50%",mainAlignment:"flex-start",children:h(Input,{label:L.search,value:q,backgroundColor:"gray5",onChange:e=>{setQ(e.target.value);setOff(0)}})}),
