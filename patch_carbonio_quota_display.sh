@@ -152,6 +152,7 @@ case "$MODE" in
       3) if uses_quota_rest; then
            echo "СТАТУС: admin-console-ui 0.20+ — этого экрана больше нет, квоты идут через REST Storages."
            echo "        Для CE используйте эмуляцию: python3 rest-shim/install.py [check|install]"
+           echo "        Соблюдение квот сервером (appserver 4.36): sudo bash enforce/install.sh"
          else
            echo "СТАТУС: неизвестная версия shell.mjs (сборка изменилась — нужен новый вариант)"
          fi ;;
@@ -173,6 +174,7 @@ case "$MODE" in
       echo "admin-console-ui 0.20+: квоты идут через REST Storages, которого нет в CE."
       if [ -f "$SHIM_INSTALL" ]; then
         echo "Ставлю эмуляцию REST: $SHIM_INSTALL"
+        echo "(Соблюдение квот сервером — отдельно: sudo bash enforce/install.sh)"
         exec python3 "$SHIM_INSTALL" install
       fi
       echo "Скачайте репозиторий целиком и запустите: python3 rest-shim/install.py install" >&2

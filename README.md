@@ -1,8 +1,29 @@
 # carbonio-ce-quotas
 
-Патч для Carbonio CE: исправление отображения занятого места в разделе «Лимит почтового ящика» в панели администратора.
+Квоты почтовых ящиков в **Carbonio CE**: отображение в панели администратора и соблюдение сервером.
+Mailbox quotas in **Carbonio CE**: the admin panel display and server-side enforcement.
 
-A patch for Carbonio CE fixing mailbox quota usage display in the admin panel.
+| Часть / Part | Для чего / What for | Версии / Versions |
+|---|---|---|
+| `patch_carbonio_quota_display.sh` | «Лимит почтового ящика» показывает `0.00 ГБ` / the "Mailbox quota" list shows `0.00 GB` | admin-console-ui 0.12.x / 0.13.x / 0.15.x (CE 26.3, 26.6) |
+| [`rest-shim/`](rest-shim) | экраны квот в админке не работают и скрыты / quota screens fail with 403 and are hidden | admin-console-ui 0.20.x (CE 26.9) |
+| [`enforce/`](enforce) | сервер не соблюдает квоты и не шлёт предупреждения о заполнении / the server no longer enforces quotas or sends warnings | appserver 4.36+ (CE 26.9) |
+
+На **CE 26.9** нужны обе новые части: `rest-shim/` (админка) и `enforce/` (сервер). На CE 26.3 / 26.6 —
+только `patch_carbonio_quota_display.sh`. Каждая часть определяет версию сама и отказывается работать там,
+где она не нужна; повторный запуск обновляет уже установленную версию.
+On **CE 26.9** both new parts are needed: `rest-shim/` (admin UI) and `enforce/` (server). On CE 26.3 / 26.6 —
+only `patch_carbonio_quota_display.sh`. Every part detects the version itself and refuses to run where it is not
+needed; re-running updates an existing install.
+
+```bash
+git clone https://github.com/mapazzzm/carbonio-ce-quotas.git && cd carbonio-ce-quotas
+# CE 26.9:
+sudo python3 rest-shim/install.py install     # затем / then Ctrl+F5 в админке / in the admin console
+sudo bash enforce/install.sh                  # сборка + установка + перезапуск appserver / build + install + appserver restart
+# CE 26.3 / 26.6:
+sudo bash patch_carbonio_quota_display.sh
+```
 
 ---
 
@@ -35,7 +56,8 @@ A patch for Carbonio CE fixing mailbox quota usage display in the admin panel.
 В 0.20.x раздела «Лимит почтового ящика» больше нет, а все экраны квот (квота учётки и её
 использование, квота домена, квота COS, «Скачать отчёт по квотам») ходят в REST
 `/services/storages/admin/quota/*` — он есть только в платной редакции; в CE сервис отвечает
-`403 RBAC: access denied`. Сами квоты в CE хранятся в LDAP и сервером соблюдаются.
+`403 RBAC: access denied`. Сами квоты в CE хранятся в LDAP, но в appserver 4.36 сервер их больше не
+соблюдает — для этого [`enforce/`](#сервер-не-соблюдает-квоты-enforce).
 
 `rest-shim/install.py` встраивает в `shell.mjs` слой `quota-rest-shim.js`, который перехватывает эти
 запросы в браузере и отвечает через штатный admin SOAP в тех же форматах JSON:
@@ -68,6 +90,22 @@ python3 rest-shim/install.py uninstall
 ```
 
 `patch_carbonio_quota_display.sh` на 0.20.x сам предлагает (и при `apply` запускает) `rest-shim`.
+
+### Сервер не соблюдает квоты (`enforce/`)
+
+В appserver 4.36 (CE 26.9) Zextras убрал квоты из бесплатной редакции: проверка квоты при доставке пустая
+(`QuotaCheckSingleton.DefaultQuotaCheck`), письма «ящик заполнен на N%» (`QuotaWarning`) удалены — ящики
+растут сверх лимита, предупреждений нет. `enforce/` — расширение appserver, возвращающее логику 4.27:
+превышение → `552 5.2.2 Over quota`, предупреждение по шаблону COS `zimbraQuotaWarnMessage` при
+`zimbraQuotaWarnPercent` (90%), не чаще `zimbraQuotaWarnInterval`. Порог и интервал можно менять в разделе
+квот домена (блок «Предупреждения о заполнении ящика», ставит `rest-shim/`).
+
+```bash
+sudo bash enforce/install.sh             # сборка + установка + перезапуск appserver
+sudo bash enforce/install.sh --uninstall
+```
+
+Пересобирать после каждого `apt upgrade carbonio-appserver`. Подробно — [enforce/README.md](enforce/README.md).
 
 ### Требования
 
@@ -122,7 +160,8 @@ Sorting still works because it is performed server-side before data reaches the 
 0.20.x drops the "Mailbox quota" list, and every quota screen (account quota and usage, domain
 quota, COS quota, "Download quota report") calls the Storages REST API
 `/services/storages/admin/quota/*`, which exists only in the commercial edition — in CE it answers
-`403 RBAC: access denied`. The quotas themselves live in LDAP and are enforced by the server.
+`403 RBAC: access denied`. The quotas themselves live in LDAP, but appserver 4.36 no longer enforces
+them — see [`enforce/`](#the-server-does-not-enforce-quotas-enforce).
 
 `rest-shim/install.py` injects `quota-rest-shim.js` into `shell.mjs`: it intercepts those requests in
 the browser and serves them from the admin SOAP API in the JSON shapes the screens expect
@@ -138,6 +177,22 @@ updates an existing install, `uninstall` restores the original `shell.mjs`.
 ```bash
 python3 rest-shim/install.py check | install | uninstall
 ```
+
+### The server does not enforce quotas (`enforce/`)
+
+In appserver 4.36 (CE 26.9) Zextras removed quotas from the free edition: the delivery-time quota check is
+empty (`QuotaCheckSingleton.DefaultQuotaCheck`) and the "mailbox is N% full" messages (`QuotaWarning`) are
+gone — mailboxes grow past the limit with no warnings. `enforce/` is an appserver extension restoring the
+4.27 logic: over quota → `552 5.2.2 Over quota`, a warning from the COS `zimbraQuotaWarnMessage` template at
+`zimbraQuotaWarnPercent` (90%), at most once per `zimbraQuotaWarnInterval`. The threshold and interval can
+be edited in the domain quota section (the "Mailbox full warnings" block added by `rest-shim/`).
+
+```bash
+sudo bash enforce/install.sh             # build + install + appserver restart
+sudo bash enforce/install.sh --uninstall
+```
+
+Rebuild after every `apt upgrade carbonio-appserver`. Details — [enforce/README.md](enforce/README.md).
 
 ### Requirements
 
@@ -181,3 +236,9 @@ const t = u?.mailsQuotaLimit ?? u?.limit ?? 0
 const [f, b] = Efe(r, t, l)
 mailsQuotaUsed: X2(r || 0).toFixed(2)
 ```
+
+---
+
+## Лицензия / License
+
+GNU AGPL v3.0 — как и сам Carbonio CE / same as Carbonio CE itself. См. / See [LICENSE](LICENSE).
