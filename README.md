@@ -27,6 +27,47 @@ A patch for Carbonio CE fixing mailbox quota usage display in the admin panel.
   
   Скрипт сам определяет версию сборки по содержимому `shell.mjs`.
   Проверено на 26.3.2 и 26.6.0; Ubuntu 22.04 и 24.04.
+- **0.20.x** (CE 26.9, проверено на 0.20.6) — экраны квот переписаны на REST, старый патч неприменим →
+  `rest-shim/` (ниже). `patch_carbonio_quota_display.sh` на такой сборке сам предлагает его.
+
+### admin-console-ui 0.20.x — квоты вообще не работают (`rest-shim/`)
+
+В 0.20.x раздела «Лимит почтового ящика» больше нет, а все экраны квот (квота учётки и её
+использование, квота домена, квота COS, «Скачать отчёт по квотам») ходят в REST
+`/services/storages/admin/quota/*` — он есть только в платной редакции; в CE сервис отвечает
+`403 RBAC: access denied`. Сами квоты в CE хранятся в LDAP и сервером соблюдаются.
+
+`rest-shim/install.py` встраивает в `shell.mjs` слой `quota-rest-shim.js`, который перехватывает эти
+запросы в браузере и отвечает через штатный admin SOAP в тех же форматах JSON:
+
+| Экран | Чтение | Запись |
+|---|---|---|
+| Учётка | `zimbraMailQuota` (учётка/COS) и `zimbraMailDomainQuota` домена — действует меньший ненулевой; использование — `GetMailbox` | `ModifyAccount zimbraMailQuota` (сброс — снять атрибут, наследовать COS) |
+| COS | `zimbraMailQuota` COS | `ModifyCos zimbraMailQuota` |
+| Домен | `zimbraMailDomainQuota` | `ModifyDomain zimbraMailDomainQuota` |
+| Отчёт по домену | CSV из `GetQuotaUsage` | — |
+
+Кроме того, в 0.20.x экраны квот **скрыты**, если не установлен `carbonio-advanced` (проверка через
+`/services/catalog/services`). Скрипт точечно снимает это условие только для квот (`unlock_0.20.json`, 9 мест:
+показ/загрузка/сохранение квоты учётки, раздел «Настройки квот учётных записей» домена, раздел квоты COS);
+остальные функции advanced (бэкап, HSM, OTP, Legal Hold…) остаются скрыты.
+
+В разделе квот домена добавлен блок **«Использование квот»**: сводка (занято в домене, число ящиков, ≥ 80 %,
+заполненные, самый большой) и таблица ящиков (занято / лимит / % с полосой, сортировка, поиск, постранично) —
+замена списка «Лимит почтового ящика», убранного в 0.20. Лимит ящика — меньшее ненулевое из его квоты и квоты домена.
+
+Квоты Files и чатов в CE не хранятся — их использование показывается как 0.
+Эмуляция не зависит от минифицированных имён (кроме регулярки кнопки отчёта); разблокировка экранов — по сборке (`unlock_<версия>.json`); повторный запуск обновляет
+установленную версию, `uninstall` возвращает `shell.mjs` в исходное состояние. Переприменять после
+`apt upgrade carbonio-admin-console-ui`.
+
+```bash
+python3 rest-shim/install.py check
+python3 rest-shim/install.py install     # затем Ctrl+F5 в админке
+python3 rest-shim/install.py uninstall
+```
+
+`patch_carbonio_quota_display.sh` на 0.20.x сам предлагает (и при `apply` запускает) `rest-shim`.
 
 ### Требования
 
@@ -73,7 +114,30 @@ Sorting still works because it is performed server-side before data reaches the 
 
 ### Affected versions
 
-- Carbonio CE 26.x (confirmed on **26.3.2**, Ubuntu 24.04 Noble)
+- Carbonio CE 26.x: admin-console-ui 0.12.x / 0.13.x / 0.15.x — `patch_carbonio_quota_display.sh` (confirmed on **26.3.2** and **26.6.0**, Ubuntu 22.04 / 24.04)
+- admin-console-ui **0.20.x** (CE 26.9, confirmed on 0.20.6) — quota screens moved to REST, the old patch does not apply → `rest-shim/` (below); `patch_carbonio_quota_display.sh` offers it automatically on such a build.
+
+### admin-console-ui 0.20.x — quotas do not work at all (`rest-shim/`)
+
+0.20.x drops the "Mailbox quota" list, and every quota screen (account quota and usage, domain
+quota, COS quota, "Download quota report") calls the Storages REST API
+`/services/storages/admin/quota/*`, which exists only in the commercial edition — in CE it answers
+`403 RBAC: access denied`. The quotas themselves live in LDAP and are enforced by the server.
+
+`rest-shim/install.py` injects `quota-rest-shim.js` into `shell.mjs`: it intercepts those requests in
+the browser and serves them from the admin SOAP API in the JSON shapes the screens expect
+(account: `zimbraMailQuota` of the account/COS and the domain's `zimbraMailDomainQuota`, the lower
+non-zero one applies, usage via `GetMailbox`; COS: `zimbraMailQuota`; domain:
+`zimbraMailDomainQuota`; report: CSV from `GetQuotaUsage`). Files/chat quotas are not stored in CE
+and show as 0. The domain quota section also gets a **"Quota usage"** block (domain summary + sortable,
+searchable mailbox table with used / limit / %), replacing the per-mailbox list removed in 0.20. In 0.20.x the quota screens are also hidden unless `carbonio-advanced` is installed; the
+installer lifts that condition for the quota screens only (`unlock_0.20.json`, 9 sites), other advanced features
+stay hidden. Independent of minified identifiers (except the report-button regex); re-running
+updates an existing install, `uninstall` restores the original `shell.mjs`.
+
+```bash
+python3 rest-shim/install.py check | install | uninstall
+```
 
 ### Requirements
 

@@ -15,7 +15,8 @@
 #   v1 — admin-console-ui 0.12.x (CE 26.3): функции Mfe/Efe/X2, объект `u`.
 #   v2 — admin-console-ui 0.13.x (CE 26.6, Vite-переписана): t8/e8/n6, объект `e`.
 #   v3 — admin-console-ui 0.15.x: k6/V3 (трансформер A6).
-#   Если ни один набор не найден — сборка снова изменилась, добавьте v4.
+#   v4 — admin-console-ui 0.20.x: экрана нет, квоты через REST Storages → rest-shim/install.py
+#   Если ни один набор не найден — сборка снова изменилась, добавьте вариант.
 #
 # СОВМЕСТИМОСТЬ: Carbonio CE 26.x, Ubuntu 22.04 и 24.04 (нужен python3 либо node).
 #
@@ -133,6 +134,9 @@ NODEEOF
     fi
 }
 
+# admin-console-ui 0.20+ ходит за квотами в REST Storages (в CE его нет) — см. rest-shim/
+uses_quota_rest() { grep -q '/quota/config/accounts/' "$SHELL_MJS" 2>/dev/null; }
+
 if [ ! -f "$SHELL_MJS" ]; then
     echo "ERROR: файл не найден: $SHELL_MJS" >&2
     exit 2
@@ -145,7 +149,12 @@ case "$MODE" in
     case "$rc" in
       0) echo "СТАТУС: патч уже применён" ;;
       1) echo "СТАТУС: патч НЕ применён (баг присутствует)" ;;
-      3) echo "СТАТУС: неизвестная версия shell.mjs (сборка изменилась — нужен новый вариант)" ;;
+      3) if uses_quota_rest; then
+           echo "СТАТУС: admin-console-ui 0.20+ — этого экрана больше нет, квоты идут через REST Storages."
+           echo "        Для CE используйте эмуляцию: python3 rest-shim/install.py [check|install]"
+         else
+           echo "СТАТУС: неизвестная версия shell.mjs (сборка изменилась — нужен новый вариант)"
+         fi ;;
     esac
     exit $rc ;;
   --revert)
@@ -159,6 +168,16 @@ case "$MODE" in
     # apply: сначала проверим, что не применён и вариант известен
     st=$(run_core check); rc=$?
     if [ "$rc" = "0" ]; then echo "Патч уже применён, ничего не делаю."; exit 0; fi
+    if [ "$rc" = "3" ] && uses_quota_rest; then
+      SHIM_INSTALL="$(dirname "$(readlink -f "$0")")/rest-shim/install.py"
+      echo "admin-console-ui 0.20+: квоты идут через REST Storages, которого нет в CE."
+      if [ -f "$SHIM_INSTALL" ]; then
+        echo "Ставлю эмуляцию REST: $SHIM_INSTALL"
+        exec python3 "$SHIM_INSTALL" install
+      fi
+      echo "Скачайте репозиторий целиком и запустите: python3 rest-shim/install.py install" >&2
+      exit 1
+    fi
     if [ "$rc" = "3" ]; then
       echo "ERROR: целевые строки не найдены — сборка admin-console-ui изменилась." >&2
       echo "Снимите новые идентификаторы с shell.mjs и добавьте вариант в VARIANTS." >&2

@@ -1,0 +1,62 @@
+{
+ "note": "admin-console-ui 0.20.x: экраны квот показываются только при carbonio-advanced (MR()==true, /services/catalog/services). Точечно снимаем это условие ТОЛЬКО для квот; прочие advanced-функции (бэкап, HSM, OTP, Legal Hold…) остаются скрыты. domain_section также встраивает блок «Использование квот» (window.__cuDomQuotaFactory из quota-rest-shim.js). legacy — прежние варианты пар, только для отката при обновлении.",
+ "pairs": [
+  [
+   "account_usage",
+   "iDe=()=>{let e=(0,X.c)(6),t=MR(),",
+   "iDe=()=>{let e=(0,X.c)(6),t=!0,"
+  ],
+  [
+   "account_editor",
+   "let v=_,y=MR(),[b]=ds(),x=c===`unlimited`",
+   "let v=_,y=!0,[b]=ds(),x=c===`unlimited`"
+  ],
+  [
+   "account_load",
+   "{data:D}=Ywe(o?e.id:void 0)",
+   "{data:D}=Ywe(e.id)"
+  ],
+  [
+   "account_save",
+   "if(t.includes(`totalComputedQuotaLimit`)&&r.isAdvanced)",
+   "if(t.includes(`totalComputedQuotaLimit`))"
+  ],
+  [
+   "domain_load",
+   "{data:p}=K6(n,l)",
+   "{data:p}=K6(n,!0)"
+  ],
+  [
+   "domain_section",
+   "q=l&&(0,Z.jsx)(Yxe,{form:V,domainName:h,isGlobalAdmin:u})",
+   "q=(0,Z.jsxs)(Z.Fragment,{children:[(0,Z.jsx)(Yxe,{form:V,domainName:h,isGlobalAdmin:u}),window.__cuDomQuotaFactory?(0,Z.jsx)(window.__cuDomQuotaC||(window.__cuDomQuotaC=window.__cuDomQuotaFactory(Y,{jsx:Z.jsx,jsxs:Z.jsxs},{Q,Row:$,Table:vB,RowF:yA,HeadF:SA,Pager:xB,PageSize:CB,Input:Dk,Field:Rk,Btn:Sr})),{domainName:h}):null]})"
+  ],
+  [
+   "domain_save",
+   "f=a&&t.domainQuotaGB!==o.domainQuotaGB",
+   "f=t.domainQuotaGB!==o.domainQuotaGB"
+  ],
+  [
+   "cos_load",
+   "{data:f}=yR(n?.zimbraId,o)",
+   "{data:f}=yR(n?.zimbraId,!0)"
+  ],
+  [
+   "cos_section",
+   "B=o&&f&&(0,Z.jsx)(xfe,",
+   "B=f&&(0,Z.jsx)(xfe,"
+  ]
+ ],
+ "legacy": [
+  [
+   "domain_section_v0",
+   "q=l&&(0,Z.jsx)(Yxe,",
+   "q=(0,Z.jsx)(Yxe,"
+  ],
+  [
+   "domain_section_v1",
+   "q=l&&(0,Z.jsx)(Yxe,{form:V,domainName:h,isGlobalAdmin:u})",
+   "q=(0,Z.jsxs)(Z.Fragment,{children:[(0,Z.jsx)(Yxe,{form:V,domainName:h,isGlobalAdmin:u}),window.__cuDomQuotaFactory?(0,Z.jsx)(window.__cuDomQuotaC||(window.__cuDomQuotaC=window.__cuDomQuotaFactory(Y,{jsx:Z.jsx,jsxs:Z.jsxs})),{domainName:h}):null]})"
+  ]
+ ]
+}
