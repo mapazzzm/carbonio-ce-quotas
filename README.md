@@ -91,6 +91,8 @@ python3 rest-shim/install.py uninstall
 ```
 
 `patch_carbonio_quota_display.sh` на 0.20.x сам предлагает (и при `apply` запускает) `rest-shim`.
+Наоборот, `rest-shim` на старых сборках 0.12–0.15 (список «Лимит почтового ящика» через `GetQuotaUsage`) ничего не
+меняет и подсказывает `patch_carbonio_quota_display.sh`; если shim туда уже поставлен, `uninstall` его снимает.
 
 ### Сервер не соблюдает квоты (`enforce/`)
 
@@ -173,7 +175,8 @@ and show as 0. The domain quota section also gets a **"Quota usage"** block (dom
 searchable mailbox table with used / %; a Limit column appears only when mailbox limits differ, otherwise the common limit is shown once in the summary), replacing the per-mailbox list removed in 0.20. In 0.20.x the quota screens are also hidden unless `carbonio-advanced` is installed; the
 installer lifts that condition for the quota screens only (`unlock_0.20.json`, 9 sites), other advanced features
 stay hidden. Independent of minified identifiers (except the report-button regex); re-running
-updates an existing install, `uninstall` restores the original `shell.mjs`.
+updates an existing install, `uninstall` restores the original `shell.mjs`. On legacy 0.12–0.15 builds (the SOAP
+`GetQuotaUsage` quota list) `rest-shim` changes nothing and points to `patch_carbonio_quota_display.sh`.
 
 ```bash
 python3 rest-shim/install.py check | install | uninstall

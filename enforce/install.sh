@@ -43,9 +43,10 @@ fi
 [ -f "$MAILBOX_JAR" ] || die "нет $MAILBOX_JAR — это не сервер Carbonio appserver / not a Carbonio appserver"
 command -v unzip >/dev/null || die "нужен unzip / unzip is required (apt install unzip)"
 JAR_LIST=$(unzip -l "$MAILBOX_JAR")
-echo "$JAR_LIST" | grep -q 'com/zextras/mailbox/quota/QuotaCheckSingleton.class' \
+# here-string, не канал: при pipefail `echo | grep -q` падает по SIGPIPE на большом списке
+grep -q 'com/zextras/mailbox/quota/QuotaCheckSingleton.class' <<<"$JAR_LIST" \
   || die "в appserver нет QuotaCheckSingleton — нужен appserver 4.36+ (Carbonio CE 26.9+) / appserver 4.36+ required"
-if echo "$JAR_LIST" | grep -q 'com/zimbra/cs/mailbox/QuotaWarning.class'; then
+if grep -q 'com/zimbra/cs/mailbox/QuotaWarning.class' <<<"$JAR_LIST"; then
   die "в этом appserver штатные квоты ещё есть (QuotaWarning) — расширение не нужно / built-in quotas still present, extension not needed"
 fi
 

@@ -82,10 +82,27 @@ def uses_rest(s):
     return "/quota/config/accounts/" in s or "/quota/accounts/" in s
 
 
+def legacy_ui(s):
+    """0.12–0.15: список «Лимит почтового ящика» через SOAP GetQuotaUsage (поле mailsQuotaUsed) — там
+    нужен patch_carbonio_quota_display.sh, а не shim. Проверять на файле БЕЗ нашей вставки (strip):
+    сам shim тоже вызывает GetQuotaUsage. / legacy builds use the SOAP quota list, not this shim."""
+    return "mailsQuotaUsed" in s and "GetQuotaUsage" in s
+
+
+def needs_shim(s):
+    """Нужен ли shim сборке (s — файл без нашей вставки): 0.20+ — REST квот и нет старого списка."""
+    return uses_rest(s) and not legacy_ui(s)
+
+
 def check():
     s = open(SHELL, encoding="utf-8").read()
     print("shell.mjs:", SHELL)
-    print("  REST-квоты в сборке / build uses quota REST:", "да" if uses_rest(s) else "нет (shim не нужен)")
+    base = strip(s)
+    if legacy_ui(base):
+        need = "нет — старая сборка 0.12–0.15, используйте patch_carbonio_quota_display.sh / legacy build"
+    else:
+        need = "да" if needs_shim(base) else "нет (shim не нужен)"
+    print("  сборке нужен shim / build needs the shim:", need)
     print("  shim:", "УСТАНОВЛЕН" if BEGIN in s else "не установлен")
     up = pick_unlock(s)
     print("  экраны квот без carbonio-advanced / quota screens unlocked:",
@@ -97,9 +114,14 @@ def check():
 
 def install():
     s = open(SHELL, encoding="utf-8").read()
-    if not uses_rest(s):
-        log("сборка не использует REST квот — shim не нужен, ничего не меняю"); return 0
     base = strip(s)
+    if legacy_ui(base):
+        log("старая сборка admin-console-ui (0.12–0.15): shim не нужен, ничего не меняю. "
+            "Для отображения квот: sudo bash patch_carbonio_quota_display.sh / legacy build, use patch_carbonio_quota_display.sh"
+            + (" (ВНИМАНИЕ: shim установлен ранее — снимите: python3 rest-shim/install.py uninstall)" if BEGIN in s else ""))
+        return 0
+    if not needs_shim(base):
+        log("сборка не использует REST квот — shim не нужен, ничего не меняю"); return 0
     shim = open(SHIM, encoding="utf-8").read().strip()
     new = BEGIN + shim + END + base
     up = pick_unlock(new)
