@@ -182,9 +182,11 @@ window.__cuDomQuotaFactory=(R,J,UI)=>function CuDomQuota(props){
     h(Row,{mainAlignment:"flex-start",width:"100%",padding:{all:"large"},children:T(err?L.err+err:L.load,{color:err?"error":"secondary"})})]});
   // лимит у всех одинаковый (обычно — квота домена) → столбец не нужен, показываем одно поле в сводке
   const same=rows.length>0&&rows.every(r=>r.limit===rows[0].limit);
-  const fld=(lab,val,w)=>h(Q,{width:w||(same?"15.5%":"19%"),mainAlignment:"flex-start",children:h(Field,{label:lab,value:val,backgroundColor:"gray6"})});
+  // значение в одну строку (иначе переносится и наезжает на подпись поля), полный текст — в подсказке
+  const one=v=>h("span",{title:v,style:{display:"block",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"},children:v});
+  const fld=(lab,val,w)=>h(Q,{width:w||(same?"12%":"14%"),mainAlignment:"flex-start",style:{minWidth:0},children:h(Field,{label:lab,value:one(val),backgroundColor:"gray6"})});
   const summary=hs(Row,{width:"100%",mainAlignment:"space-between",padding:{top:"large",left:"small",right:"small"},children:[
-    fld(L.total,fmt(tot)),fld(L.boxes,String(rows.length)),...(same?[fld(L.limAll,rows[0].limit?fmt(rows[0].limit):L.unl)]:[]),fld(L.warn,String(w80)),fld(L.full,String(full)),fld(L.max,big?`${big.name} — ${fmt(big.used)}`:"—")]});
+    fld(L.total,fmt(tot)),fld(L.boxes,String(rows.length)),...(same?[fld(L.limAll,rows[0].limit?fmt(rows[0].limit):L.unl)]:[]),fld(L.warn,String(w80)),fld(L.full,String(full)),fld(L.max,big?`${big.name} — ${fmt(big.used)}`:"—",same?"36%":"40%")]});
   const onSort=(id,ord)=>{setSort({k:id,d:ord==="asc"?1:-1});setOff(0)};
   const headers=[
     {id:"name",label:L.mbox,width:same?"50%":"40%",bold:!0,sortable:!0,onSortChange:onSort},
